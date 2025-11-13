@@ -28,6 +28,8 @@ import { toast } from 'sonner';
 import { useDataset } from '@/lib/data/useDataset';
 import { tweetVisualizationService } from '@/features/map/services/tweet-visualization-service';
 import { useMapLayers } from '@/features/map/hooks/useMapLayers';
+import { mapService } from '@/features/map/services/map-service';
+import { useEffect } from 'react';
 
 export default function MapPage() {
   const [isDragMode, setIsDragMode] = useState(false);
@@ -70,6 +72,35 @@ export default function MapPage() {
     },
     []
   );
+
+  // Load influence layer when map and dataset are ready
+  useEffect(() => {
+    const loadInfluenceLayer = async () => {
+      if (!mapView || !dataset) return;
+
+      try {
+        toast.loading('Cargando capa de usuarios influyentes...', {
+          id: 'loading-influence',
+        });
+
+        await mapService.createInfluenceLayer(dataset.users);
+
+        const influenceData = mapService.getInfluenceData();
+        toast.success('Capa de usuarios cargada', {
+          id: 'loading-influence',
+          description: `${influenceData.length} usuarios georeferenciados visualizados`,
+        });
+      } catch (error) {
+        console.error('Error loading influence layer:', error);
+        toast.error('Error al cargar usuarios', {
+          id: 'loading-influence',
+          description: 'No se pudo cargar la capa de usuarios influyentes',
+        });
+      }
+    };
+
+    loadInfluenceLayer();
+  }, [mapView, dataset]);
 
   const handleLocationSelect = useCallback(
     (location: { x: number; y: number }, address: string) => {

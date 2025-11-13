@@ -10,8 +10,10 @@ export { useMapLayers } from './hooks/useMapLayers';
 // Store
 export { useMapStore } from './store/map-store';
 
-// Service
+// Services
 export { mapService } from './services/map-service';
+export { userInfluenceService } from './services/user-influence-service';
+export type { UserInfluence, InfluenceConfig } from './services/user-influence-service';
 
 // Components
 export { MapLayerControls } from './components/MapLayerControls';

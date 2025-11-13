@@ -13,11 +13,20 @@ import {
 } from '@/lib/arcgis/map-factory';
 import type { MapView, Graphic } from '@/lib/arcgis/types';
 import type { MapViewOptions } from '../types';
+import type { User } from '@/types/dataset';
+import {
+  getUsersWithInfluence,
+  calculatePointSize,
+  getInfluenceColor,
+  type UserInfluence,
+} from './user-influence-service';
 
 class MapService {
   private mapView: MapView | null = null;
   private graphicsLayer: __esri.GraphicsLayer | null = null;
   private highlightHandle: __esri.Handle | null = null;
+  private influenceLayer: __esri.GraphicsLayer | null = null;
+  private influenceData: UserInfluence[] = [];
 
   /**
    * Initialize map view
@@ -312,7 +321,7 @@ class MapService {
 
     // Layers added dynamically (like tweets-layer) are search layers
     // The WebMap layers are loaded from the portal and don't have specific IDs we set
-    const dynamicLayerIds = ['tweets-layer', 'social-media-graphics'];
+    const dynamicLayerIds = ['tweets-layer', 'social-media-graphics', 'users-influence-layer'];
 
     // If it's not a dynamic layer we created, it's from the WebMap
     return !dynamicLayerIds.includes(layerId);
@@ -331,6 +340,140 @@ class MapService {
   }
 
   /**
+   * Create and add influence layer with user points
+   */
+  async createInfluenceLayer(users: User[]): Promise<void> {
+    if (!this.mapView || !this.mapView.map) {
+      throw new Error('Map view not initialized');
+    }
+
+    // Remove existing influence layer if present
+    if (this.influenceLayer) {
+      this.mapView.map.remove(this.influenceLayer);
+      this.influenceLayer = null;
+    }
+
+    // Calculate influence for all users with geo data
+    this.influenceData = getUsersWithInfluence(users);
+
+    if (this.influenceData.length === 0) {
+      console.warn('No users with geographic data found');
+      return;
+    }
+
+    // Import ArcGIS modules
+    const [Point, Graphic, SimpleMarkerSymbol, GraphicsLayer] = await Promise.all([
+      import('@arcgis/core/geometry/Point').then((m) => m.default),
+      import('@arcgis/core/Graphic').then((m) => m.default),
+      import('@arcgis/core/symbols/SimpleMarkerSymbol').then((m) => m.default),
+      import('@arcgis/core/layers/GraphicsLayer').then((m) => m.default),
+    ]);
+
+    // Create graphics for each user
+    const graphics: Graphic[] = this.influenceData.map((userInfluence) => {
+      const point = new Point({
+        longitude: userInfluence.longitude,
+        latitude: userInfluence.latitude,
+      });
+
+      const size = calculatePointSize(userInfluence.normalizedScore, 8, 40);
+      const color = getInfluenceColor(userInfluence.normalizedScore);
+
+      const symbol = new SimpleMarkerSymbol({
+        color: color,
+        size: size,
+        outline: {
+          color: [255, 255, 255, 0.8],
+          width: 2,
+        },
+      });
+
+      return new Graphic({
+        geometry: point,
+        symbol: symbol,
+        attributes: {
+          userId: userInfluence.userId,
+          username: userInfluence.username,
+          name: userInfluence.name,
+          influenceScore: userInfluence.influenceScore,
+          normalizedScore: userInfluence.normalizedScore,
+          followers: userInfluence.metrics.followers,
+          following: userInfluence.metrics.following,
+          tweets: userInfluence.metrics.tweets,
+          listed: userInfluence.metrics.listed,
+        },
+        popupTemplate: {
+          title: '{name} (@{username})',
+          content: `
+            <div style="font-size: 13px;">
+              <p style="margin: 8px 0;"><strong>Puntuación de Influencia:</strong> {influenceScore}</p>
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 4px 0;"><strong>Seguidores:</strong> {followers}</p>
+                <p style="margin: 4px 0;"><strong>Siguiendo:</strong> {following}</p>
+                <p style="margin: 4px 0;"><strong>Tweets:</strong> {tweets}</p>
+                <p style="margin: 4px 0;"><strong>En listas:</strong> {listed}</p>
+              </div>
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 4px 0; font-size: 12px; color: #6b7280;">
+                  <strong>Ubicación:</strong><br>
+                  Lat: ${userInfluence.latitude.toFixed(6)}<br>
+                  Lon: ${userInfluence.longitude.toFixed(6)}
+                </p>
+              </div>
+            </div>
+          `,
+        },
+      });
+    });
+
+    // Create the influence layer
+    this.influenceLayer = new GraphicsLayer({
+      id: 'users-influence-layer',
+      title: 'Usuarios Influyentes',
+      graphics: graphics,
+      visible: true,
+    });
+
+    // Add layer to map
+    this.mapView.map.add(this.influenceLayer);
+
+    console.log(`Influence layer created with ${graphics.length} user points`);
+  }
+
+  /**
+   * Get influence layer
+   */
+  getInfluenceLayer(): __esri.GraphicsLayer | null {
+    return this.influenceLayer;
+  }
+
+  /**
+   * Toggle influence layer visibility
+   */
+  toggleInfluenceLayerVisibility(): boolean {
+    if (!this.influenceLayer) return false;
+    this.influenceLayer.visible = !this.influenceLayer.visible;
+    return this.influenceLayer.visible;
+  }
+
+  /**
+   * Remove influence layer
+   */
+  removeInfluenceLayer(): void {
+    if (!this.influenceLayer || !this.mapView || !this.mapView.map) return;
+    this.mapView.map.remove(this.influenceLayer);
+    this.influenceLayer = null;
+    this.influenceData = [];
+  }
+
+  /**
+   * Get influence data
+   */
+  getInfluenceData(): UserInfluence[] {
+    return this.influenceData;
+  }
+
+  /**
    * Destroy map view and clean up resources
    */
   destroy(): void {
@@ -339,6 +482,11 @@ class MapService {
     if (this.graphicsLayer) {
       this.graphicsLayer.removeAll();
       this.graphicsLayer = null;
+    }
+
+    if (this.influenceLayer) {
+      this.influenceLayer.removeAll();
+      this.influenceLayer = null;
     }
 
     if (this.mapView) {
