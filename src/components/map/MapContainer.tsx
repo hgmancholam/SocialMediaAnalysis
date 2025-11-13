@@ -31,7 +31,7 @@ interface MapContainerProps {
 
 export const MapContainer: FC<MapContainerProps> = ({
   className,
-  useWebMap = true,
+  useWebMap = false,
   onMapReady,
 }) => {
   const {
