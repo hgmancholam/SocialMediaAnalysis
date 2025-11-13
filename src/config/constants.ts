@@ -9,7 +9,7 @@ export const MAP_CONSTANTS = {
   DEFAULT_BASEMAP: 'streets-vector',
   DEFAULT_CENTER: [-74.0721, 4.711] as [number, number], // Bogotá
   DEFAULT_ZOOM: 10,
-  MIN_ZOOM: 8,
+  MIN_ZOOM: 4, // Permite ver todo el país
   MAX_ZOOM: 18,
 
   HIGHWAY_EXTENT: {
