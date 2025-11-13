@@ -39,6 +39,10 @@ export const createMapViewFromWebMap = async (container: HTMLDivElement): Promis
     center: arcgisConfig.map.center,
     zoom: arcgisConfig.map.zoom,
     // Disable native UI controls (we have custom controls)
+    constraints: {
+      minZoom: arcgisConfig.map.minZoom,
+      maxZoom: arcgisConfig.map.maxZoom,
+    },
     ui: {
       components: [], // Remove all default UI components including zoom
     },
