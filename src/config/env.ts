@@ -33,8 +33,8 @@ export const env = {
   arcgis: {
     portalUrl: getEnvVar('NEXT_PUBLIC_ARCGIS_PORTAL_URL', ARCGIS_CONFIG.PORTAL),
     itemId: getEnvVar('NEXT_PUBLIC_ARCGIS_ITEM_ID', ARCGIS_CONFIG.ITEM_ID),
-    clientId: getEnvVar('NEXT_PUBLIC_ARCGIS_CLIENT_ID', ''),
-    apiKey: getEnvVar('NEXT_PUBLIC_ARCGIS_API_KEY', ''),
+    clientId: getEnvVar('NEXT_PUBLIC_ARCGIS_CLIENT_ID', ARCGIS_CONFIG.ARCGIS_APP_ID),
+    apiKey: getEnvVar('NEXT_PUBLIC_ARCGIS_API_KEY', ARCGIS_CONFIG.ARCGIS_CLIENT_SECRET),
   },
 
   // Application Configuration

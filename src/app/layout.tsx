@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/sonner';
 import { siteConfig } from '@/config/site';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { SessionProvider } from './auth/SessionProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -31,8 +32,10 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} font-sans antialiased bg-[#0F1419] text-white`}>
-        <ErrorBoundary>{children}</ErrorBoundary>
-        <Toaster />
+        <SessionProvider>
+          <ErrorBoundary>{children}</ErrorBoundary>
+          <Toaster />
+        </SessionProvider>
       </body>
     </html>
   );

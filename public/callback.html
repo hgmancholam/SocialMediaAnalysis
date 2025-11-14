@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Autenticación</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      (function () {
+        var hash = window.location.hash.substr(1);
+        var result = hash.split('&').reduce(function (res, item) {
+          var parts = item.split('=');
+          res[parts[0]] = decodeURIComponent(parts[1]);
+          return res;
+        }, {});
+        // console.log("result", result);
+
+        if (result.error) {
+          console.log('Hubo un error en la autenticación');
+          localStorage.setItem('error', result.error);
+          localStorage.setItem('error_description', result.error_description);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('username');
+          localStorage.removeItem('state');
+          localStorage.removeItem('expires_in');
+        } else if (result.access_token) {
+          //alert(JSON.stringify(result, null, 2));
+          localStorage.removeItem('error');
+          localStorage.removeItem('error_description');
+          localStorage.setItem('access_token', result.access_token);
+          localStorage.setItem('username', result.username);
+          localStorage.setItem('state', result.state);
+          localStorage.setItem(
+            'expires_in',
+            new Date(new Date().getTime() + result.expires_in * 1000).toISOString()
+          );
+        }
+
+        window.opener.location.reload();
+        window.close();
+      })();
+    </script>
+  </body>
+</html>

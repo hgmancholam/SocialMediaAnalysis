@@ -136,15 +136,11 @@ export const NUMBER_FORMATS = {
   DECIMAL_PLACES: 2,
 } as const;
 
-// Auth Constants
-export const AUTH_CONSTANTS = {
-  TOKEN_KEY: 'arcgis_token',
-  USER_KEY: 'arcgis_user',
-  SESSION_TIMEOUT: 1000 * 60 * 60, // 1 hour
-  REDIRECT_URI: '/auth/callback',
-} as const;
-
 export const ARCGIS_CONFIG = {
   ITEM_ID: '2f2bb3ff302a4ff7adcaf2f938904aaf', // Finagro
   PORTAL: 'https://geoagro.finagro.com.co/arcgisportal/sharing/rest',
+  ARCGIS_APP_ID: '7njaaJm1E8zc0eFq',
+  URL_REDIRECT: 'http://localhost:3000/',
+  ARCGIS_CLIENT_SECRET: '64881988dd744c64a41757bbf4414492',
+  SESSION_TIMEOUT: 1000 * 60 * 60, // 1 hour
 } as const;
