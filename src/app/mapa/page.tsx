@@ -298,7 +298,7 @@ export default function MapPage() {
       <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
         {/* Map Container */}
         <div className="absolute inset-0">
-          <MapContainer useWebMap={false} onMapReady={handleMapReady} />
+          <MapContainer useWebMap={true} onMapReady={handleMapReady} />
         </div>
         {/* Map Search Bar - Top Left */}
         <div className="absolute top-4 left-4 z-10">
