@@ -39,7 +39,7 @@ MAJOR_CITIES = [
 
 def generate_coordinates_near_city(city: Dict[str, Any], radius_deg: float = 0.5) -> Tuple[float, float]:
     """
-    Genera coordenadas aleatorias cerca de una ciudad específica.
+    Genera coordenadas aleatorias cerca de una ciudad específica usando distribución circular.
     
     Args:
         city: Diccionario con información de la ciudad (lat, lon, weight)
@@ -48,12 +48,24 @@ def generate_coordinates_near_city(city: Dict[str, Any], radius_deg: float = 0.5
     Returns:
         Tupla (latitud, longitud)
     """
-    # Generar offset aleatorio dentro del radio
-    angle = random.uniform(0, 2 * 3.14159)
-    distance = random.uniform(0, radius_deg) * random.uniform(0.3, 1.0)  # Más concentrado cerca del centro
+    import math
     
-    lat = city['lat'] + distance * (1 if random.random() > 0.5 else -1)
-    lon = city['lon'] + distance * (1 if random.random() > 0.5 else -1)
+    # Generar ángulo completamente aleatorio (0 a 360 grados)
+    angle = random.uniform(0, 2 * math.pi)
+    
+    # Usar raíz cuadrada para distribución uniforme en círculo
+    # Esto evita concentración en el centro
+    distance = math.sqrt(random.uniform(0, 1)) * radius_deg
+    
+    # Calcular offset en latitud y longitud
+    lat_offset = distance * math.cos(angle)
+    lon_offset = distance * math.sin(angle)
+    
+    # Ajustar longitud por latitud (la tierra es más estrecha cerca de los polos)
+    lon_offset = lon_offset / math.cos(math.radians(city['lat']))
+    
+    lat = city['lat'] + lat_offset
+    lon = city['lon'] + lon_offset
     
     # Asegurar que está dentro de los límites de Colombia
     lat = max(COLOMBIA_BOUNDS['lat_min'], min(COLOMBIA_BOUNDS['lat_max'], lat))
